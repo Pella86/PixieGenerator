@@ -13,7 +13,7 @@ import pathlib
 
 import matplotlib.pyplot as plt
 
-texture_folder = pathlib.Path("./1.17.1/assets/minecraft/textures/block")
+texture_folder = pathlib.Path("./Minecraft_version/1.17.1/assets/minecraft/textures/block")
 
 good_block_file = pathlib.Path("./good_blocks.txt")
 

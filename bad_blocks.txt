@@ -365,3 +365,8 @@ purple_candle_lit.png
 stonecutter_bottom.png
 stonecutter_side.png
 white_candle.png
+birch_trapdoor.png
+cactus_side.png
+cactus_top.png
+fire_coral.png
+horn_coral.png
