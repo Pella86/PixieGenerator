@@ -25,27 +25,37 @@ class Block:
         self.name = name
         self.image = image
         
+        self.color_average = None
+        
     def average_color(self):
-        px_matrix = self.image.load()
         
-        col_avg = [0, 0, 0]
-        
-        px_count = 0
-        
-        for i in range(16):
-            for j in range(16):
-                px = px_matrix[i, j]
+        if self.color_average == None:
+            px_matrix = self.image.load()
+            
+            col_avg = [0, 0, 0]
+            
+            px_count = 0
+            
+            for i in range(16):
+                for j in range(16):
+                    px = px_matrix[i, j]
+                    
+                    px_count += 1
+    
+                    for c in range(3):
+                        col_avg[c] += px[c]
+    
+            for i in range(3):
+                col_avg[i] = col_avg[i] / px_count / 256
                 
-                px_count += 1
-
-                for c in range(3):
-                    col_avg[c] += px[c]
-
-        for i in range(3):
-            col_avg[i] = col_avg[i] / px_count / 256
+            self.color_average = col_avg
+            
+            
+            return col_avg
         
+        else:
+            return self.color_average
         
-        return col_avg
     
     def top_color(self):
         

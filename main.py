@@ -11,6 +11,7 @@ Created on Sun Sep 26 14:22:30 2021
 
 import tkinter
 from tkinter import filedialog
+from tkinter import scrolledtext
 
 
 import pathlib
@@ -44,7 +45,83 @@ class ImageCanvas(tkinter.Canvas):
         
         self.image = img
 
-        self.create_image(self.width / 2, self.height / 2, image=img)         
+        self.create_image(self.width / 2, self.height / 2, image=img)   
+        
+
+
+class SelectImageCanavas(tkinter.Canvas):
+    
+    def __init__(self, parent_frame, w, h, block_list_display):
+        super().__init__(parent_frame, height=h, width=w)
+        
+        self.width = w
+        self.height = h
+        
+        self.bind("<Button-1>", lambda event : self.click(event))
+        
+        self.image_size = None
+        
+        self.selected_block_coords = None
+        
+        self.block_matrix = None
+        
+        self.block_list_display = block_list_display
+        
+    def display_image(self, image):
+        
+        self.image_size = image.size
+        
+        # resize the image so that it fits the canvas
+        # to do: handle non square pictures
+        res_img = image.resize((self.width, self.height), PIL.Image.NEAREST)
+        res_img = res_img.convert("RGBA")
+        
+        img = PIL.ImageTk.PhotoImage(res_img) 
+        
+        self.image = img
+
+        self.create_image(self.width / 2, self.height / 2, image=img) 
+        
+    
+    def click(self, event):
+        print(event)
+        
+        print(event.x, event.y)
+        
+        event.x = event.x if event.x <= self.width - 1 else self.width - 1
+        event.y = event.y if event.y <= self.height - 1 else self.height - 1
+        
+        block_i = int(event.x / self.width * self.image_size[0] / 16)
+        block_j = int(event.y / self.height * self.image_size[1] / 16)
+        
+        print(block_i, block_j)
+        
+        self.selected_block_coords = (block_i, block_j)
+        
+        block = self.block_matrix[block_i][block_j]
+        
+        print(block.name)
+        
+        stack = FindBestBlock.top_matching_blocks(block.average_color()) 
+        
+        print("10 most similar blocks:")
+        stack.print_block_names()
+        
+        self.block_list_display.clear_list()
+        max_d = max([d for _, d in stack.stack])
+        
+        for block, d in stack.stack:
+            wd = 100 - d / max_d * 100
+            strd = f"{wd:.1f}"
+            self.block_list_display.add_block(block, strd)
+            
+        
+        
+        
+        
+        
+    
+    
         
         
 # =============================================================================
@@ -204,6 +281,8 @@ class GenerateFrame(tkinter.LabelFrame):
             
             self.block_display.display_image(new_im)
             
+            self.block_display.block_matrix = block_matrix
+            
             new_im.save("output.png")
             
     
@@ -211,44 +290,71 @@ class GenerateFrame(tkinter.LabelFrame):
 # =============================================================================
 # Block list display
 # =============================================================================
-
-
-        
+            
 class BlockListDisplay(tkinter.LabelFrame):
     
-    def __init__(self, parent_frame):
-        super().__init__(parent_frame, text="Block list")
+    def __init__(self, parent_frame, title):
+        super().__init__(parent_frame, text=title)
+
+        self.scroll_text = tkinter.scrolledtext.ScrolledText(self, width=35, height=17)
+        self.scroll_text.pack()
         
-        self.block_list = []
-        
+        self.scroll_text.images = []
     
     def add_block(self, block, count):
         
-        # create a frame linked to the name of the block
+        img = PIL.ImageTk.PhotoImage(block.image)
+        self.scroll_text.image_create(tkinter.END, image=img)
+        self.scroll_text.images.append(img)
         
-        block_frame = tkinter.Frame(self)
-        block_frame.pack()
-        
-        # create a canvas to show the block
-        
-        image_canvas = ImageCanvas(block_frame, 16, 16)
-        image_canvas.grid(row=0, column=0)
-        image_canvas.display_image(block.image)
-        
-        # label for the name and count
         name = block.name.replace("_", " ")
-        label = tkinter.Label(block_frame, text=f"{name}: {count}")
-        label.grid(row=0, column=1)
+        self.scroll_text.insert(tkinter.END, f"{name}: {count}\n")
         
-        self.block_list.append(block_frame)
-        
-
     def clear_list(self):
-        
-        for frame in self.block_list:
-            frame.destroy()
+        self.scroll_text.delete("1.0", tkinter.END)
+        self.scroll_text.images = []
 
-        self.block_list = []
+
+
+
+
+
+        
+# class BlockListDisplay(tkinter.LabelFrame):
+    
+#     def __init__(self, parent_frame):
+#         super().__init__(parent_frame, text="Block list")
+        
+#         self.block_list = []
+        
+    
+#     def add_block(self, block, count):
+        
+#         # create a frame linked to the name of the block
+        
+#         block_frame = tkinter.Frame(self)
+#         block_frame.pack()
+        
+#         # create a canvas to show the block
+        
+#         image_canvas = ImageCanvas(block_frame, 16, 16)
+#         image_canvas.grid(row=0, column=0)
+#         image_canvas.display_image(block.image)
+        
+#         # label for the name and count
+#         name = block.name.replace("_", " ")
+#         label = tkinter.Label(block_frame, text=f"{name}: {count}")
+#         label.grid(row=0, column=1)
+        
+#         self.block_list.append(block_frame)
+        
+
+#     def clear_list(self):
+        
+#         for frame in self.block_list:
+#             frame.destroy()
+
+#         self.block_list = []
         
     
     
@@ -273,14 +379,22 @@ original_image.grid(row=0, column=0)
 resized_image_display = ImageCanvas(root, 256, 256)
 resized_image_display.grid(row=0, column=2)
 
+
+# similar blocks list display
+similar_block_list = BlockListDisplay(root, "Similar blocks")
+similar_block_list.grid(row=1, column=2)
+
 # blocks display
 
-block_display = ImageCanvas(root, 256, 256)
-block_display.grid(row=0, column=3)
+block_display = SelectImageCanavas(root, 256, 256, similar_block_list)
+block_display.grid(row=1, column=0)
 
 # block list display
-block_list = BlockListDisplay(root)
-block_list.grid(row=0, column=4)
+block_list = BlockListDisplay(root, "Block list")
+block_list.grid(row=1, column=1)
+
+
+
 
 # generate function
 

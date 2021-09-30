@@ -24,8 +24,6 @@ def draw_rectangle(color, ax = None):
     plt.show()
 
 
-
-
 def distance(p1, p2):
     
     sq = 0
@@ -122,7 +120,7 @@ class Stack:
     
     def __init__(self):
         
-        self.stack_size = 25
+        self.stack_size = 10
         
         self.stack = []
         
