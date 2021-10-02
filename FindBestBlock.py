@@ -120,7 +120,7 @@ class Stack:
     
     def __init__(self):
         
-        self.stack_size = 10
+        self.stack_size = 20
         
         self.stack = []
         
